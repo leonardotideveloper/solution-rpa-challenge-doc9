@@ -1,0 +1,10 @@
+.opencode
+.pytest_cache/
+.ruff_cache/
+.venv
+.env
+__pycache__/
+htmlChallengeEasy/
+htmlChallengeHard/
+htmlChallengeMedium/
+htmlChallengeExtreme/
