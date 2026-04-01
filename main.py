@@ -48,6 +48,12 @@ async def run_hard() -> dict:
         print("  RESULT: SUCCESS")
         print(f"  Token: {result.get('token', 'N/A')[:40]}...")
         print(f"  Message: {result.get('message', 'N/A')}")
+        if result.get("certificate_cn"):
+            print(f"  Certificate CN: {result.get('certificate_cn')}")
+        if result.get("level"):
+            print(f"  Level: {result.get('level')}")
+        if result.get("elapsed_ms"):
+            print(f"  Server Time: {result.get('elapsed_ms')}ms")
     else:
         print("  RESULT: FAILED")
         print(f"  Error: {result.get('error', 'Unknown')}")
@@ -82,16 +88,18 @@ async def run_extreme() -> dict:
 def main() -> int:
     setup_logging()
 
-    level = sys.argv[1].lower() if len(sys.argv) > 1 else "easy"
+    has_arg = len(sys.argv) > 1
+    level = sys.argv[1].lower() if has_arg else None
 
     try:
-        if level == "easy":
+        if has_arg and level in ("hard", "extreme"):
+            if level == "hard":
+                result = asyncio.run(run_hard())
+            else:
+                result = asyncio.run(run_extreme())
+        elif has_arg and level == "easy":
             result = asyncio.run(run_easy())
-        elif level == "hard":
-            result = asyncio.run(run_hard())
-        elif level == "extreme":
-            result = asyncio.run(run_extreme())
-        elif level == "all":
+        else:
             results = {}
             results["easy"] = asyncio.run(run_easy())
             print("\n\n")
@@ -106,10 +114,6 @@ def main() -> int:
                 status = "PASS" if r.get("success") else "FAIL"
                 print(f"  [{status}] {name}: {r.get('elapsed_ms', 0)}ms")
             result = results.get("easy")
-        else:
-            print(f"Unknown level: {level}")
-            print("Usage: python run_bots.py [easy|hard|extreme|all]")
-            return 1
 
         return 0 if result.get("success") else 1
 
