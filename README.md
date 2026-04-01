@@ -218,11 +218,91 @@ logger.error("Erro: %s", e)
 ============================================================
   RPA Challenge - Easy Level
 ============================================================
+23:10:43 [INFO] src.controllers.easy_controller: [easy_controller] Starting...
+23:10:43 [INFO] src.services.easy_service: [easy_service] Executing login...
+23:10:43 [INFO] httpx: HTTP Request: POST https://localhost:3000/api/easy/login "HTTP/1.1 200 OK"
+23:10:43 [INFO] src.services.easy_service: [easy_service] Login successful
+23:10:43 [INFO] src.controllers.easy_controller: [easy_controller] Completed successfully
 
 ============================================================
   RESULT: SUCCESS
-  Token: a0bf26d72ab278553b3d753a15f114943d9b6923...
+  Token: c108490b6e9ca638ce48b3fce33737089cc8d438...
   Message: Autenticação bem-sucedida!
-  Time: 316ms
+  Time: 126ms
 ============================================================
+
+
+
+============================================================
+  RPA Challenge - Hard Level
+============================================================
+23:10:43 [INFO] src.controllers.hard_controller: [hard_controller] Starting...
+23:10:43 [INFO] src.services.hard_service: [hard_service] Step 1: Launching headless browser...
+23:10:44 [INFO] src.services.hard_service: [hard_service] Step 2: Navigating to /hard/
+23:10:44 [INFO] src.services.hard_service: [hard_service] Step 3: Extracting challenge values from page...
+23:10:44 [INFO] src.services.hard_service: [hard_service] Challenge: da0f1db68d432b77405f2ecb9777230c...
+23:10:44 [INFO] src.services.hard_service: [hard_service] Timestamp: 1775009444494
+23:10:44 [INFO] src.services.hard_service: [hard_service] Nonce: mqkn5rxztzl
+23:10:44 [INFO] src.services.hard_service: [hard_service] Step 4: Submitting credentials to /api/hard/login...
+23:10:44 [INFO] httpx: HTTP Request: POST https://localhost:3000/api/hard/login "HTTP/1.1 200 OK"
+23:10:44 [INFO] src.services.hard_service: [hard_service] Login successful, redirect: https://localhost:3001/verify?token=60ed3508ced92187e1c8f9f775b45ac5e5414792f044d8f080d754b586e67be6
+23:10:44 [INFO] src.services.hard_service: [hard_service] TTL: 30s
+23:10:44 [INFO] src.services.hard_service: [hard_service] Step 5: Following redirect to port 3001 (mTLS)...
+23:10:44 [INFO] src.services.hard_service: [hard_service] Step 6: Making mTLS request to port 3001...
+23:10:44 [INFO] httpx: HTTP Request: GET https://localhost:3001/verify?token=60ed3508ced92187e1c8f9f775b45ac5e5414792f044d8f080d754b586e67be6 "HTTP/1.1 200 OK"
+23:10:44 [INFO] src.services.hard_service: [hard_service] Response status: 200
+23:10:44 [INFO] src.services.hard_service: [hard_service] mTLS authentication successful
+23:10:44 [INFO] src.controllers.hard_controller: [hard_controller] Completed successfully
+
+============================================================
+  RESULT: SUCCESS
+  Token: 60ed3508ced92187e1c8f9f775b45ac5e5414792...
+  Message: Credenciais válidas! Agora apresente seu certificado digital.
+  Time: 1480ms
+============================================================
+
+
+
+============================================================
+  RPA Challenge - Extreme Level
+============================================================
+23:10:44 [INFO] src.controllers.extreme_controller: [extreme_controller] Starting...
+23:10:44 [INFO] src.services.extreme_service: [extreme_service] Step 1: Initializing session...
+23:10:45 [INFO] httpx: HTTP Request: POST https://localhost:3000/api/extreme/init "HTTP/1.1 200 OK"
+23:10:45 [INFO] src.services.extreme_service: [extreme_service] Session ID: 9e09e0fe-d350-4144-be40-fb90e3993910
+23:10:45 [INFO] src.services.extreme_service: [extreme_service] Step 2: Connecting to WebSocket...
+23:10:45 [INFO] src.services.extreme_service: [extreme_service] Step 3: Receiving PoW challenge...
+23:10:45 [INFO] src.services.extreme_service: [extreme_service] Challenge: d8bb68f8b5d1a303..., difficulty: 5
+23:10:45 [INFO] src.services.extreme_service: [extreme_service] Step 4: Solving PoW...
+23:10:45 [INFO] src.services.pow_service: [pow_service] Solving PoW with difficulty=5
+23:10:47 [INFO] src.services.pow_service: [pow_service] Solution found: nonce=605452
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Nonce: 605452, Hash: 00000270bd1766bdfb027d873244d35b...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Step 5: Sending PoW solution...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Step 6: Receiving intermediate_token...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] intermediate_token: 41a24f8eb3c546c7f9ae07f1d2ff9443...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Step 7: Verifying token and getting encrypted payload...
+23:10:47 [INFO] httpx: HTTP Request: POST https://localhost:3000/api/extreme/verify-token "HTTP/1.1 200 OK"
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Encrypted payload: 4726bfa0c33962162a7b91f4a082ca46:6e82effab062f3701...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Step 8: Decrypting payload to get OTP...
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] OTP: 982744
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Step 9: Submitting final authentication...
+23:10:47 [INFO] httpx: HTTP Request: POST https://localhost:3000/api/extreme/complete "HTTP/1.1 200 OK"
+23:10:47 [INFO] src.services.extreme_service: [extreme_service] Authentication completed successfully
+23:10:47 [INFO] src.controllers.extreme_controller: [extreme_controller] Completed successfully
+
+============================================================
+  RESULT: SUCCESS
+  Token: f59424068abfaa8f27e3ee795b853fd27f728f1f...
+  Proof Hash: 3ab3dc4010f476292bd4e860200f825c590f381da3d6116b87315d7727281e28
+  Time: 3033ms
+============================================================
+
+
+
+============================================================
+  SUMMARY
+============================================================
+  [PASS] easy: 126ms
+  [PASS] hard: 1480ms
+  [PASS] extreme: 3033ms
 ```
