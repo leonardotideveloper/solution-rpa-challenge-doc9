@@ -8,9 +8,9 @@ Solução automatizada para os desafios de autenticação do RPA Challenge.
 
 | Nível | Descrição | Tempo Médio |
 |-------|-----------|-------------|
-| **Easy** | Login simples com formulário | ~300ms |
-| **Hard** | Certificado digital mTLS + challenge dinâmico via JavaScript | ~4s |
-| **Extreme** | WebSocket + Proof-of-Work + AES-CBC decryption | ~6s |
+| **Easy** | Login simples com formulário | ~200ms |
+| **Hard** | Certificado digital mTLS + challenge dinâmico via JavaScript | ~2s |
+| **Extreme** | WebSocket + Proof-of-Work + AES-CBC decryption | ~3s |
 
 ---
 
@@ -32,8 +32,8 @@ pip install -r requirements.txt
 ### 3. Executar os Bots
 
 ```bash
-# Executar todos os desafios
-python main.py all
+# Executar todos os desafios (default)
+python main.py
 
 # Executar individualmente
 python main.py easy
@@ -135,19 +135,19 @@ cert_password=test123
 
 ## 🔧 Como Funciona Cada Desafio
 
-### Easy (~300ms)
+### Easy (~200ms)
 1. POST `/api/easy/login` com username/password
 2. Recebe token de autenticação
 
-### Hard (~4s)
+### Hard (~2s)
 1. Lança browser headless (Playwright)
 2. Extrai challenge values da página (`#challenge`, `#timestamp`, `#nonce`)
 3. POST `/api/hard/login` com credentials + challenge
 4. Recebe redirect URL para porta 3001
 5. GET na redirect URL com certificado mTLS (client.pfx)
-6. Recebe token final
+6. Extrai token e metadados do HTML de resposta
 
-### Extreme (~6s)
+### Extreme (~3s)
 1. POST `/api/extreme/init` para iniciar sessão
 2. Conecta ao WebSocket
 3. Recebe PoW challenge (prefix + difficulty)
@@ -183,7 +183,7 @@ python -m pytest tests/ -v
 ruff check src/ tests/ main.py
 
 # Executar todos os bots
-python main.py all
+python main.py
 ```
 
 ---
@@ -256,9 +256,11 @@ logger.error("Erro: %s", e)
 
 ============================================================
   RESULT: SUCCESS
-  Token: 6e2da4854f829045......
+  Token: 21aac3750dd41f93......
   Message: Certificado digital validado com sucesso.
-  Time: 1396ms
+  Certificate CN: doc9-rpa-candidate
+  Level: hard
+  Server Time: 199ms
 ============================================================
 
 
@@ -302,7 +304,7 @@ logger.error("Erro: %s", e)
 ============================================================
   SUMMARY
 ============================================================
-  [PASS] easy: 170ms
-  [PASS] hard: 1396ms
-  [PASS] extreme: 4295ms
+  [PASS] easy: 160ms
+  [PASS] hard: 199ms
+  [PASS] extreme: 2611ms
 ```
