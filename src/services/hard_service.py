@@ -2,6 +2,7 @@ import httpx
 from playwright.async_api import async_playwright
 
 from src.config import get_logger, settings
+from src.models import HardLoginResponse
 from src.utils import (
     ApiError,
     BotError,
@@ -43,7 +44,7 @@ async def execute() -> dict:
             "[hard_service] Step 4: Submitting credentials to /api/hard/login..."
         )
 
-        login_data = await post(
+        raw_login_data = await post(
             f"{settings.base_url}/api/hard/login",
             json_data={
                 "username": settings.hard_username,
@@ -55,11 +56,12 @@ async def execute() -> dict:
             referer=f"{settings.base_url}/hard/",
         )
 
-        if not login_data.get("success"):
-            raise ApiError(f"Login failed: {login_data.get('message')}")
+        login_data = HardLoginResponse(**raw_login_data)
+        if not login_data.success:
+            raise ApiError(f"Login failed: {login_data.message}")
 
-        redirect_url = login_data.get("redirect")
-        ttl_seconds = login_data.get("ttl_seconds", 30)
+        redirect_url = login_data.redirect
+        ttl_seconds = login_data.ttl_seconds or 30
         logger.info(f"[hard_service] Login successful, redirect: {redirect_url}")
         logger.info(f"[hard_service] TTL: {ttl_seconds}s")
 
@@ -72,7 +74,7 @@ async def execute() -> dict:
         logger.info("[hard_service] mTLS authentication successful")
         return {
             "token": token,
-            "message": login_data.get("message", ""),
+            "message": login_data.message or "",
         }
 
 

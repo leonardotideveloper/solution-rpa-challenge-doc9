@@ -1,6 +1,13 @@
 import json
 
 from src.config import get_logger, settings
+from src.models import (
+    ExtremeCompleteResponse,
+    ExtremeInitResponse,
+    ExtremePowChallenge,
+    ExtremePowResult,
+    ExtremeVerifyTokenResponse,
+)
 from src.services.pow_service import solve_pow
 from src.utils import (
     PowError,
@@ -16,12 +23,13 @@ logger = get_logger()
 
 async def execute() -> dict:
     logger.info("[extreme_service] Step 1: Initializing session...")
-    init_resp = await post(
+    init_data = await post(
         f"{settings.base_url}/api/extreme/init",
         json_data={},
     )
-    session_id = init_resp["session_id"]
-    ws_ticket = init_resp["ws_ticket"]
+    init_resp = ExtremeInitResponse(**init_data)
+    session_id = init_resp.session_id
+    ws_ticket = init_resp.ws_ticket
     logger.info(f"[extreme_service] Session ID: {session_id}")
 
     logger.info("[extreme_service] Step 2: Connecting to WebSocket...")
@@ -32,11 +40,12 @@ async def execute() -> dict:
         pow_msg = await ws.recv()
         pow_data = json.loads(pow_msg)
 
-        if pow_data.get("type") != "pow_challenge":
-            raise PowError(f"Expected pow_challenge, got: {pow_data}")
+        pow_challenge_data = ExtremePowChallenge(**pow_data)
+        if pow_challenge_data.type != "pow_challenge":
+            raise PowError(f"Expected pow_challenge, got: {pow_challenge_data}")
 
-        pow_challenge = pow_data["prefix"]
-        difficulty = pow_data.get("difficulty", settings.pow_difficulty)
+        pow_challenge = pow_challenge_data.prefix
+        difficulty = pow_challenge_data.difficulty or settings.pow_difficulty
         logger.info(
             f"[extreme_service] Challenge: {pow_challenge[:32]}..., difficulty: {difficulty}"
         )
@@ -50,12 +59,13 @@ async def execute() -> dict:
 
         logger.info("[extreme_service] Step 6: Receiving intermediate_token...")
         pow_result_msg = await ws.recv()
-        pow_result = json.loads(pow_result_msg)
+        pow_result_data = json.loads(pow_result_msg)
 
-        if pow_result.get("type") != "pow_result":
+        pow_result = ExtremePowResult(**pow_result_data)
+        if pow_result.type != "pow_result":
             raise WebSocketError(f"Expected pow_result, got: {pow_result}")
 
-        intermediate_token = pow_result["intermediate_token"]
+        intermediate_token = pow_result.intermediate_token
         logger.info(
             f"[extreme_service] intermediate_token: {intermediate_token[:32]}..."
         )
@@ -63,7 +73,7 @@ async def execute() -> dict:
     logger.info(
         "[extreme_service] Step 7: Verifying token and getting encrypted payload..."
     )
-    verify_resp = await post(
+    raw_verify_resp = await post(
         f"{settings.base_url}/api/extreme/verify-token",
         json_data={
             "session_id": session_id,
@@ -72,7 +82,8 @@ async def execute() -> dict:
         referer=f"{settings.base_url}/extreme/",
     )
 
-    encrypted_payload = verify_resp.get("token") or verify_resp.get("encrypted_payload")
+    verify_resp = ExtremeVerifyTokenResponse(**raw_verify_resp)
+    encrypted_payload = verify_resp.token or verify_resp.encrypted_payload
     logger.info(f"[extreme_service] Encrypted payload: {encrypted_payload[:50]}...")
 
     logger.info("[extreme_service] Step 8: Decrypting payload to get OTP...")
@@ -82,7 +93,7 @@ async def execute() -> dict:
     logger.info(f"[extreme_service] OTP: {otp}")
 
     logger.info("[extreme_service] Step 9: Submitting final authentication...")
-    final_resp = await post(
+    raw_final_resp = await post(
         f"{settings.base_url}/api/extreme/complete",
         json_data={
             "session_id": session_id,
@@ -93,9 +104,10 @@ async def execute() -> dict:
         referer=f"{settings.base_url}/extreme/",
     )
 
+    final_resp = ExtremeCompleteResponse(**raw_final_resp)
     logger.info("[extreme_service] Authentication completed successfully")
     return {
-        "token": final_resp.get("token", ""),
-        "proof_hash": final_resp.get("proof_hash", ""),
-        "elapsed_server_ms": final_resp.get("elapsed_ms", 0),
+        "token": final_resp.token,
+        "proof_hash": final_resp.proof_hash,
+        "elapsed_server_ms": final_resp.elapsed_ms,
     }
