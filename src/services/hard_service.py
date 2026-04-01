@@ -72,7 +72,7 @@ async def execute() -> dict:
         logger.info("[hard_service] Step 5: Following redirect to port 3001 (mTLS)...")
         mtls_response = await _handle_mtls(redirect_url)
 
-        logger.info(f"[hard_service] mTLS authentication successful")
+        logger.info("[hard_service] mTLS authentication successful")
         return {
             "token": mtls_response.token,
             "message": mtls_response.message or "mTLS authentication successful",
