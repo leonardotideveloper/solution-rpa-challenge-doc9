@@ -16,6 +16,15 @@ class HardLoginResponse(BaseModel):
     ttl_seconds: Optional[int] = None
 
 
+class HardMtlsResponse(BaseModel):
+    success: bool
+    certificate_cn: Optional[str] = None
+    token: Optional[str] = None
+    elapsed_ms: Optional[int] = None
+    level: Optional[str] = None
+    message: Optional[str] = None
+
+
 class ExtremeInitResponse(BaseModel):
     session_id: str
     ws_ticket: str

@@ -1,8 +1,9 @@
+import re
 import httpx
 from playwright.async_api import async_playwright
 
 from src.config import get_logger, settings
-from src.models import HardLoginResponse
+from src.models import HardLoginResponse, HardMtlsResponse
 from src.utils import (
     ApiError,
     BotError,
@@ -69,16 +70,19 @@ async def execute() -> dict:
         await browser.close()
 
         logger.info("[hard_service] Step 5: Following redirect to port 3001 (mTLS)...")
-        token = await _handle_mtls(redirect_url)
+        mtls_response = await _handle_mtls(redirect_url)
 
-        logger.info("[hard_service] mTLS authentication successful")
+        logger.info(f"[hard_service] mTLS authentication successful")
         return {
-            "token": token,
-            "message": login_data.message or "",
+            "token": mtls_response.token,
+            "message": mtls_response.message or "mTLS authentication successful",
+            "certificate_cn": mtls_response.certificate_cn,
+            "elapsed_ms": mtls_response.elapsed_ms,
+            "level": mtls_response.level,
         }
 
 
-async def _handle_mtls(redirect_url: str) -> str:
+async def _handle_mtls(redirect_url: str) -> HardMtlsResponse:
     logger.info("[hard_service] Step 6: Making mTLS request to port 3001...")
     cert_pem, key_pem = extract_pem_from_pfx(
         str(settings.cert_client_pfx), settings.cert_password
@@ -100,13 +104,44 @@ async def _handle_mtls(redirect_url: str) -> str:
             )
 
         logger.info(f"[hard_service] Response status: {response.status_code}")
+
         if response.status_code >= 400:
             raise ApiError(
                 f"mTLS request failed: {response.status_code}",
                 status_code=response.status_code,
             )
 
+        html_content = response.text
+
+        if "✅ Autenticação Completa!" in html_content:
+            token_match = re.search(
+                r"<strong>Token:</strong>\s*<code>([^<]+)</code>", html_content
+            )
+            cn_match = re.search(
+                r"<strong>Certificado CN:</strong>\s*([^<]+)<br>", html_content
+            )
+            time_match = re.search(
+                r"<strong>Tempo total:</strong>\s*<code>(\d+)ms</code>", html_content
+            )
+            level_match = re.search(r"<strong>Nível:</strong>\s*(\w+)", html_content)
+            msg_match = re.search(
+                r"<h1[^>]*>.*?</h1>\s*<p[^>]*>([^<]+)</p>", html_content
+            )
+
+            if not token_match:
+                raise ApiError("Token not found in mTLS response HTML")
+
+            mtls_response = HardMtlsResponse(
+                success=True,
+                token=token_match.group(1),
+                certificate_cn=cn_match.group(1) if cn_match else None,
+                elapsed_ms=int(time_match.group(1)) if time_match else None,
+                level=level_match.group(1) if level_match else None,
+                message=msg_match.group(1) if msg_match else None,
+            )
+            return mtls_response
+
+        raise ApiError("Unexpected mTLS response format")
+
     finally:
         cleanup_temp_files(cert_path, key_path)
-
-    return redirect_url.split("token=")[-1] if "token=" in redirect_url else ""

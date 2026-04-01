@@ -6,6 +6,7 @@ from .responses import (
     ExtremePowResult,
     ExtremeVerifyTokenResponse,
     HardLoginResponse,
+    HardMtlsResponse,
     ServiceResult,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "ExtremePowResult",
     "ExtremeVerifyTokenResponse",
     "HardLoginResponse",
+    "HardMtlsResponse",
     "ServiceResult",
 ]
