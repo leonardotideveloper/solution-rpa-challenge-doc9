@@ -21,7 +21,8 @@ class ExtremeController:
             logger.error(f"[extreme_controller] Failed: {e}")
             result = {"success": False, "error": str(e)}
 
-        result["elapsed_ms"] = int((time.time() - start_time) * 1000)
+        if "elapsed_ms" not in result:
+            result["elapsed_ms"] = int((time.time() - start_time) * 1000)
         return result
 
 
